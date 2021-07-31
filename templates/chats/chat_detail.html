@@ -1,0 +1,144 @@
+{% extends "layout/base.html" %}
+
+{% load static %}
+
+{% block title %}{{ chat.name }}{% endblock %}
+
+{% block main %}
+    <div class="m-5">
+        <div class="px-4 py-3 my-3 text-center">
+            <h1 class="display-8 fw-bold">{{ chat.name }}</h1>
+            <div class="col-lg-6 mx-auto">
+                <p class="lead mb-4">Количество участников - {{ chat.members_count }}</p>
+                <div class="btn-group">
+                    <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Участники
+                    </button>
+
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item link-danger" href="{% url 'profile' chat.admin.id %}" target="_blank">{{ chat.admin }}</a></li>
+                        {% for user in chat.users.all %}
+                            <li><a class="dropdown-item" href="{% url 'profile' user.id %}" target="_blank">{{ user }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="allmessages" style = "margin-bottom:10%;">
+            {% for message in messages %}
+                {% if forloop.last %}
+                    <div class="card mb-3 messages last-message" data-messageid = "{{ message.id }}"> 
+                {% else %}
+                    <div class="card mb-3 messages">
+                {% endif %}    
+                        <div class="row g-0">
+                            <div class="col-md-12">
+                                <div class="card-body">
+                                <div class="row">
+                                    <h5 class="card-title"><a class="" style = "text-decoration: none; color: #000 !important;" href="{% url 'profile' message.sender.id %}" target="_blank">{{ message.sender }}</a></h5>
+                                    <spam class="card-text">{{ message.message }}</p>
+                                </div>
+                                    <spam class="card-text"><small class="text-muted">{{ message.created }}</small></spam>
+                                    <spam class="card-text ms-3">
+                                        {% if message.is_readed %}
+                                            <img alt="" class="readed ml-1" src="{% static 'icons/check-circle.svg' %}">
+                                        {% else %}
+                                            <img alt="" class="not-readed ml-1" src="{% static 'icons/check.svg' %}">
+                                        {% endif %}
+                                    </spam>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            {% endfor %}
+        </div>
+        <div class="" style = "color:white;">
+            <form method="POST" class = "fixed-bottom mb-4" action="{% url 'chat' chat.code %}"> 
+                {% csrf_token %}
+                <div class="row mx-auto justify-content-center">
+                    <div class="col-8">
+                        <input type="message" class="form-control" id="inputMessage" name = "message" required>
+                    </div>
+                    <div class="col-2 d-grid gap-1">
+                        <button type="submit" class="btn btn-primary text-center">Отправить</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+    window.onload=function(){
+        window.scrollTo(0,document.body.scrollHeight);
+    }
+</script>
+
+<script>
+    var timerId = setInterval(function() {
+        let lastMessageId = $('.last-message').attr('data-messageid')
+        let data = {
+            lastMessageId:lastMessageId
+        }
+
+        .('.messages').removeClass('last-message')
+        .('.messages').removeAttr('data-messageid')
+
+        $.ajax({
+            method:"GET",
+            dataType:"json",
+            data:data,
+            url:"{% url 'more_messages' chat.code %}"
+            success:function(data){
+                let result = data['data']
+                if(result){
+                    $.each(result, function(key, obj){
+                        if(obj['last_message']){
+                            $('.allmessages').append(
+                                '<div class="card mb-3 messages last-message" data-messageid = "' + obj['id'] + '">' +
+                                    '<div class="row g-0">'+
+                                        '<div class="col-md-12">'+
+                                            '<div class="card-body">'+
+                                            '<div class="row">'+
+                                                '<h5 class="card-title">' + '<a class="" style = "text-decoration: none; color: #000 !important;" href="' + '" target="_blank">' + obj['sender'] + '</a>' + '</h5>'+
+                                                '<spam class="card-text">' + obj['message'] + '</p>' +
+                                            '</div>'+
+                                                '<spam class="card-text">' + '<small class="text-muted">' + obj['created'] + '</small>' + '</spam>' +
+                                            '</div>' +
+                                        '</div>' +
+                                    '</div>' +
+                                '</div>'
+                            )
+                        }
+                        else{
+                            $('.allmessages').append(
+                                '<div class="card mb-3 messages">' +
+                                    '<div class="row g-0">'+
+                                        '<div class="col-md-12">'+
+                                            '<div class="card-body">'+
+                                            '<div class="row">'+
+                                                '<h5 class="card-title">' + '<a class="" style = "text-decoration: none; color: #000 !important;" href="' + '" target="_blank">' + obj['sender'] + '</a>' + '</h5>'+
+                                                '<spam class="card-text">' + obj['message'] + '</p>' +
+                                            '</div>'+
+                                                '<spam class="card-text">' + '<small class="text-muted">' + obj['created'] + '</small>' + '</spam>' +
+                                            '</div>' +
+                                        '</div>' +
+                                    '</div>' +
+                                '</div>'
+                            )
+                        }      
+                    })
+                }
+            }
+        })
+    }, 1000);
+</script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+{% endblock %}

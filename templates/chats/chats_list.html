@@ -1,0 +1,47 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Список чатов{% endblock %}
+
+{% block main %}
+    <h1 class = "mt-5 text-center mb-5" data-bs-toggle="tooltip" data-bs-placement="bottom" title="я не умею работать с json, помогите">Списочек чатов</h1>
+    <p class="mb-2 text-center">Просто хочу напомнить, что здесь список всех чатов, включая диалоги.</p>
+    <div class="d-grid gap-2">
+        <a href="{% url 'add_chat' %}" class = "btn btn-outline-dark col-10 mx-auto" target="_blank" role="button">Создать чат, создать диалог</a>
+    </div>
+    {% if chats %}
+        <div class="chatslist row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 justify-content-center mt-5">
+            {% for chat in chats %}
+                <div class="card shadow-sm col m-2" style="width: 22rem;">
+                    {% comment %} <img src="{{ chat.image.url }}" class="card-img-top" alt="..."> {% endcomment %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ chat.name }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">Админ - {{ chat.admin }}</h6>
+                        <h6 class="card-subtitle mb-2 text-muted">Тип - 
+                            {% if chat.is_dialog%}
+                                диалог
+                            {% else %}
+                                чат
+                            {% endif %}
+                        </h6>
+                        <p class="card-text">
+                            <div class="card-header">Участники ({{ chat.members_count }}):</div>
+                                <ul class="list-group list-group-flush">
+                                    {% for chat in chat.users.all %}
+                                        <li class="list-group-item">{{ chat.username }}</li>
+                                    {% endfor %}
+                                </ul>
+                        </p>
+                        <a href="{{ chat.get_absolute_url }}" class="card-link btn btn-primary" target="_blank">{{ chat.code }}</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <h6 class="mb-2 mt-5 text-center">Создай чето</h6>
+    {% endif %}
+{% endblock %}
+
+{% comment %} <a href="{% url 'chat' chat.code %}" class="card-link btn btn-primary" target="_blank">{{ chat.code }}</a> {% endcomment %}
+
+{% block scripts %}
+{% endblock %}
