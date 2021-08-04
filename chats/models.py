@@ -21,6 +21,7 @@ class Chat(models.Model):
         verbose_name = 'Код для входа'
     )
     name = models.CharField(max_length = 200, blank = True, default = "Чат", verbose_name = 'Название')
+    #FIXME: удалить админку
     admin = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete = models.PROTECT, 
@@ -72,7 +73,7 @@ class Message(models.Model):
     class Meta:
         verbose_name = 'Сообщение'
         verbose_name_plural = 'Сообщения'
-        ordering = ['created', 'updated']
+        ordering = ['-created', 'updated']
     
     def __str__(self):
         return self.message

@@ -77,21 +77,21 @@ class DynamicMessagesLoad(View):
     def get(request, code, *args, **kwargs):
         choosen_chat = Chat.objects.get(code = code)
         last_message_id = request.GET.get('lastMessageId')
-        print(last_message_id)
-        more_messages = Message.objects.filter(Q(chat = choosen_chat) & Q(pk__gt = int(last_message_id))).values('id', 'sender', 'message', 'is_readed', 'created')
+        more_messages = Message.objects.filter(Q(chat = choosen_chat) & Q(pk__gt = int(last_message_id))).values('id', 'sender__username', 'message', 'is_readed', 'created')
+        #print(f'\n\n\n\n\n\n{more_messages}\n\n\n\n\n\n\n')
         if not more_messages:
             return JsonResponse({'data':False})
         data = []
         for message in more_messages:
             obj ={
                 'id':message['id'],
-                'sender':message['sender'],
+                'sender':message['sender__username'],
                 'message':message['message'],
                 'is_readed':message['is_readed'],
                 'created':message['created']
             }
             data.append(obj)
-        data[-1]['last_post'] = True
+        data[-1]['last_message'] = True
         return JsonResponse({'data':data})
 
 
