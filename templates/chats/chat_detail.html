@@ -16,7 +16,6 @@
                     </button>
 
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item link-danger" href="{% url 'profile' chat.admin.id %}" target="_blank">{{ chat.admin }}</a></li>
                         {% for user in chat.users.all %}
                             <li><a class="dropdown-item" href="{% url 'profile' user.id %}" target="_blank">{{ user }}</a></li>
                         {% endfor %}

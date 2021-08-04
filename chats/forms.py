@@ -6,7 +6,7 @@ from .models import Chat, Message
 class ChatAddForm(ModelForm):
     class Meta:
         model = Chat
-        fields = ['name', 'admin', 'users']
+        fields = ['name', 'users']
 
     def __init__(self, *args, **kwargs):
         super(ChatAddForm, self).__init__(*args, **kwargs)
