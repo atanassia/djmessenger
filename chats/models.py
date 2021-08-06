@@ -35,8 +35,7 @@ class Chat(models.Model):
         ordering = ['-created', 'updated']
 
     def __str__(self):
-        return self.name
-   
+        return f"id {self.id}, имя - {self.name}"   
     def clean(self): 
         if self.is_dialog == True:
             self.members_count = 2
@@ -69,4 +68,4 @@ class Message(models.Model):
         ordering = ['-created', 'updated']
     
     def __str__(self):
-        return self.message
+        return f'сообщение "{self.message}" с id {self.id} от {self.sender.username} (id - {self.sender.id})'

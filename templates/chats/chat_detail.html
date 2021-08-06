@@ -24,6 +24,7 @@
             </div>
         </div>
         <div class="allmessages" style = "margin-bottom:10%;">
+        {% if messages %}
             {% for message in messages %}
                 {% if forloop.last %}
                     <div class="card mb-3 messages last-message" data-messageid = "{{ message.id }}"> 
@@ -50,20 +51,26 @@
                         </div>
                     </div>
             {% endfor %}
+        {% else %}
+            <div id="no_messages">
+                <p class="last-message text-muted text-center" data-messageid = "begin">Пока пусто, напишите что-либо</p>
+            </div>
+        {% endif %}
         </div>
-        <div class="" style = "color:white;">
-            <form method="POST" class = "fixed-bottom mb-4" action="{% url 'chat' chat.code %}"> 
+        <div>
+            <form method="POST" id = "sending-form" class = "fixed-bottom mb-4" action="{% url 'chat' chat.code %}"> 
                 {% csrf_token %}
                 <div class="row mx-auto justify-content-center">
                     <div class="col-8">
                         <input type="message" class="form-control" id="inputMessage" name = "message" required>
                     </div>
                     <div class="col-2 d-grid gap-1">
-                        <button type="submit" class="btn btn-primary text-center">Отправить</button>
+                        <button type="submit" id = "submitForm" class="btn btn-primary text-center">Отправить</button>
                     </div>
                 </div>
             </form>
         </div>
+        <div id="alert-box" class="mb-5 fixed-bottom"></div>
     </div>
 
 
@@ -73,19 +80,20 @@
 
 {% block scripts %}
 
-<script>
-    window.onload=function(){
-        window.scrollTo(0,document.body.scrollHeight);
-    }
+<script async>
+        window.onload=function(){
+            window.scrollTo(0,document.body.scrollHeight);
+        }
+    
 </script>
 
-<script>
+<script defer>
     var timerId = setInterval(function(){
         let lastMessageId = $('.last-message').attr('data-messageid')
         let data = {
             lastMessageId:lastMessageId
         }
-
+        console.log(lastMessageId)
 
         $.ajax({
             method:"GET",
@@ -96,6 +104,9 @@
                 console.log(data)
                 let result = data['data']
                 if(result){
+                    if(lastMessageId == "begin"){
+                            document.getElementById("no_messages").remove();
+                        }
                     $.each(result, function(key, obj){
                         if(obj['last_message']){
                             $('.messages').removeClass("last-message")
@@ -138,7 +149,51 @@
                 }
             }
         })
-    }, 1000);
+    }, 2000);
+</script>
+
+
+<script async>
+const alertBox = document.getElementById('alert-box')
+const form = document.getElementById('sending-form')
+const message = document.getElementById('inputMessage')
+const csrf = document.getElementsByName('csrfmiddlewaretoken')
+console.log(csrf)
+const url = ""
+
+const handleAlerts = (type, text) =>{
+    alertBox.innerHTML = `<div class="alert alert-${type}" role="alert">
+                            ${text}
+                        </div>`
+}
+
+form.addEventListener('submit', e=>{
+    e.preventDefault()
+
+    const fd = new FormData()
+    fd.append('csrfmiddlewaretoken', csrf[0].value)
+    fd.append('message', message.value)
+
+    $.ajax({
+        type: 'POST',
+        url: url,
+        data: fd,
+        success: function(response){
+            console.log(response)
+            setTimeout(()=>{
+                alertBox.innerHTML = ""
+                message.innerHTML = ""
+            }, 3000)
+        },
+        error: function(error){
+            console.log(error)
+            handleAlerts('danger', 'ups..something went wrong')
+        },
+        cache: false,
+        contentType: false,
+        processData: false,
+    })
+})
 </script>
 
 <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>

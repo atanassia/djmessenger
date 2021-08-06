@@ -57,15 +57,20 @@ class ChatDetails(View):
     
 
     def post(self, request, code, *args, **kwargs):
-        choosen_chat = Chat.objects.get(code = code)
         form = AddMessageForm(request.POST)
+        choosen_chat = Chat.objects.get(code = code)
         add_message = form.save(commit = False)
-        if request.user.is_authenticated:
-            add_message.sender = request.user
-        else:
-            add_message.sender = User.objects.get(id = 1)
-        add_message.chat = choosen_chat
-        form.save()
+        data = {}
+        if request.is_ajax():
+            if form.is_valid():
+                if request.user.is_authenticated:
+                    add_message.sender = request.user
+                else:
+                    add_message.sender = User.objects.get(id = 1)
+                add_message.chat = choosen_chat
+                form.save()
+                data['status'] = 'ok'
+                return JsonResponse(data)
         messages = Message.objects.filter(chat = choosen_chat)
         context = {'messages':messages, 'chat':choosen_chat}
         return render(request, 'chats/chat_detail.html', context)
@@ -77,8 +82,13 @@ class DynamicMessagesLoad(View):
     def get(request, code, *args, **kwargs):
         choosen_chat = Chat.objects.get(code = code)
         last_message_id = request.GET.get('lastMessageId')
-        more_messages = Message.objects.filter(Q(chat = choosen_chat) & Q(pk__gt = int(last_message_id))).values('id', 'sender__username', 'message', 'is_readed', 'created')
-        #print(f'\n\n\n\n\n\n{more_messages}\n\n\n\n\n\n\n')
+        if last_message_id == None:
+            return JsonResponse({'data':False})
+        elif last_message_id == 'begin':
+            print('ok begin hi')
+            more_messages = Message.objects.filter(chat = choosen_chat).values('id', 'sender__username', 'message', 'is_readed', 'created')
+        else:    
+            more_messages = Message.objects.filter(Q(chat = choosen_chat) & Q(pk__gt = int(last_message_id))).values('id', 'sender__username', 'message', 'is_readed', 'created')
         if not more_messages:
             return JsonResponse({'data':False})
         data = []
