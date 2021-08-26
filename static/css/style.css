@@ -1,0 +1,17 @@
+
+
+@font-face {
+	font-family: 'Source Code Pro'; 
+	src: url(../fonts/SourceCodePro-Medium.ttf); 
+}
+
+
+body{
+    background-color: rgb(2, 17, 20);
+    font-family: 'Source Code Pro', monospace;
+    color:rgb(126, 252, 246);
+}
+
+.card_boreder{
+    border-bottom: 2px solid rgb(5, 198, 193);
+}
