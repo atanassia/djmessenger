@@ -7,19 +7,8 @@ import uuid
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 
-# def generate_unique_code():
-#     return ''.join(str(uuid.uuid4()).split('-'))
-
-
 class Chat(models.Model):
-
-    # code = models.CharField(
-    #     max_length=32,
-    #     unique=True,
-    #     blank = True,
-    #     default=generate_unique_code,
-    #     verbose_name = 'Код для входа'
-    # )
+    
     code = models.UUIDField(default=uuid.uuid4, editable=False)
     name = models.CharField(max_length = 200, blank = True, default = "Чат", verbose_name = 'Название')
     users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name = 'chatusers', verbose_name = 'Участники')

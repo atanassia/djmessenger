@@ -5,9 +5,9 @@
 {% block title %}{{ chat.name }}{% endblock %}
 
 {% block main %}
-    <div class="m-5">
+    <div class="info-messages-section m-5">
         <div class="px-4 py-3 my-3 text-center">
-            <h1 class="display-8 fw-bold">{{ chat.name }}</h1>
+            <h1 class="title">{{ chat.name }}</h1>
             <div class="col-lg-6 mx-auto">
                 <p class="lead mb-4">Количество участников - {{ chat.members_count }}</p>
                 <div class="btn-group">
@@ -17,52 +17,24 @@
 
                     <ul class="dropdown-menu">
                         {% for user in chat.users.all %}
-                            <li><a class="dropdown-item" href="{% url 'profile' user.id %}" target="_blank">{{ user }}</a></li>
+                            <li><a class="dropdown-item" target="_blank">{{ user }}</a></li>
                         {% endfor %}
                     </ul>
                 </div>
             </div>
         </div>
+
         <div class="allmessages" style = "margin-bottom:10%;">
-        {% if messages %}
-            {% for message in messages %}
-                {% if forloop.last %}
-                    <div class="card mb-3 messages last-message" data-messageid = "{{ message.id }}"> 
-                {% else %}
-                    <div class="card mb-3 messages">
-                {% endif %}    
-                        <div class="row g-0">
-                            <div class="col-md-12">
-                                <div class="card-body">
-                                <div class="row">
-                                    <h5 class="card-title"><a class="" style = "text-decoration: none; color: #000 !important;" href="{% url 'profile' message.sender.id %}" target="_blank">{{ message.sender }}</a></h5>
-                                    <spam class="card-text">{{ message.message }}</p>
-                                </div>
-                                    <spam class="card-text"><small class="text-muted">{{ message.created }}</small></spam>
-                                    <spam class="card-text ms-3">
-                                        {% if message.is_readed %}
-                                            <img alt="" class="readed ml-1" src="{% static 'icons/check-circle.svg' %}">
-                                        {% else %}
-                                            <img alt="" class="not-readed ml-1" src="{% static 'icons/check.svg' %}">
-                                        {% endif %}
-                                    </spam>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-            {% endfor %}
-        {% else %}
-            <div id="no_messages">
-                <p class="last-message text-muted text-center" data-messageid = "begin">Пока пусто, напишите что-либо</p>
-            </div>
-        {% endif %}
+
         </div>
+    </div>
+
         <div>
             <form method="POST" id = "sending-form" class = "fixed-bottom mb-4" action="{% url 'chat' chat.code %}"> 
                 {% csrf_token %}
                 <div class="row mx-auto justify-content-center">
                     <div class="col-8">
-                        <input type="message" class="form-control" id="inputMessage" name = "message" required>
+                        <input type="message" class="form-control" id="inputMessage" name = "message" autofocus required>
                     </div>
                     <div class="col-2 d-grid gap-1">
                         <button type="submit" id = "submitForm" class="btn btn-primary text-center">Отправить</button>
@@ -70,7 +42,8 @@
                 </div>
             </form>
         </div>
-        <div id="alert-box" class="mb-5 fixed-bottom"></div>
+
+        <div id="alert-box" class="mb-5 fixed-bottom text-center"></div>
     </div>
 
 
@@ -80,12 +53,29 @@
 
 {% block scripts %}
 
-<script async>
-        window.onload=function(){
-            window.scrollTo(0,document.body.scrollHeight);
-        }
-    
+<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+
+<script>
+    window.onload=function(){
+        window.scrollTo(0,document.body.scrollHeight);
+    }
 </script>
+
+
+<script>
+    $.ajax({
+        type: 'POST',
+        url: '{% url "load-data" chat.code %}',
+        success: function(response){
+            console.log(response)
+            $('.allmessages').append(response)
+        },
+        cache: false,
+        contentType: false,
+        processData: false,
+    });
+</script>
+
 
 <script defer>
     var timerId = setInterval(function(){
@@ -149,52 +139,51 @@
                 }
             }
         })
-    }, 2000);
+    }, 3000);
 </script>
-
 
 <script async>
-const alertBox = document.getElementById('alert-box')
-const form = document.getElementById('sending-form')
-const message = document.getElementById('inputMessage')
-const csrf = document.getElementsByName('csrfmiddlewaretoken')
-console.log(csrf)
-const url = ""
+    const alertBox = document.getElementById('alert-box')
+    const form = document.getElementById('sending-form')
+    const message = document.getElementById('inputMessage')
+    const csrf = document.getElementsByName('csrfmiddlewaretoken')
+    console.log(csrf)
+    const url = ""
 
-const handleAlerts = (type, text) =>{
-    alertBox.innerHTML = `<div class="alert alert-${type}" role="alert">
-                            ${text}
-                        </div>`
-}
+    const handleAlerts = (type, text) =>{
+        alertBox.innerHTML = `<div class="alert alert-${type}" role="alert">
+                                ${text}
+                            </div>`
+    }
 
-form.addEventListener('submit', e=>{
-    e.preventDefault()
+    form.addEventListener('submit', e=>{
+        e.preventDefault()
 
-    const fd = new FormData()
-    fd.append('csrfmiddlewaretoken', csrf[0].value)
-    fd.append('message', message.value)
+        const fd = new FormData()
+        fd.append('csrfmiddlewaretoken', csrf[0].value)
+        fd.append('message', message.value)
 
-    $.ajax({
-        type: 'POST',
-        url: url,
-        data: fd,
-        success: function(response){
-            console.log(response)
-            setTimeout(()=>{
-                alertBox.innerHTML = ""
-                message.innerHTML = ""
-            }, 3000)
-        },
-        error: function(error){
-            console.log(error)
-            handleAlerts('danger', 'ups..something went wrong')
-        },
-        cache: false,
-        contentType: false,
-        processData: false,
+        $.ajax({
+            type: 'POST',
+            url: url,
+            data: fd,
+            success: function(response){
+                console.log(response)
+                setTimeout(()=>{
+                    alertBox.innerHTML = ""
+                    message.innerHTML = ""
+                }, 3000)
+            },
+            error: function(error){
+                console.log(error)
+                handleAlerts('danger', '【⚆‸⚆】 ну вот, опять что-то не так.... (╯⸟ ͟ʖ⸟）╯︵ ┻━┻')
+            },
+            cache: false,
+            contentType: false,
+            processData: false,
+        })
+        document.getElementById('inputMessage').value = "";
     })
-})
 </script>
 
-<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
 {% endblock %}

@@ -1,0 +1,23 @@
+{% for message in messages %}
+    {% if forloop.last %}
+        <div class="card mb-3 messages last-message" data-messageid = "{{ message.id }}"> 
+    {% else %}
+        <div class="card mb-3 messages">
+    {% endif %}    
+            <div class="row g-0">
+                <div class="col-md-12">
+                    <div class="card-body">
+                    <div class="row">
+                        <h5 class="card-title"><a class="" style = "text-decoration: none; color: #000 !important;" href="{% url 'profile' message.sender.id %}" target="_blank">{{ message.sender }}</a></h5>
+                        <spam class="card-text">{{ message.message }}</p>
+                    </div>
+                        <spam class="card-text"><small class="text-muted">{{ message.created }}</small></spam>
+                        <spam class="card-text ms-3">
+                            <img alt="" class="not-readed ml-1" src="{% static 'icons/check.svg' %}">
+                        </spam>
+                    </div>
+                </div>
+            </div>
+        </div>
+{% endfor %}
+

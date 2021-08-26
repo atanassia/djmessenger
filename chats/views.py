@@ -1,9 +1,9 @@
-#from django.contrib.auth.models import User
-#from django.conf import settings
-
+from django.core.serializers import serialize
+from django.http.response import HttpResponse
 
 from django.shortcuts import render
-from django.views.generic.base import View
+from django.template.loader import render_to_string
+from django.views.generic.base import TemplateView, View
 from django.views.generic.list import ListView
 from django.views.generic import CreateView, DetailView
 
@@ -17,46 +17,34 @@ from django.db.models import Q
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
-def json(request):
-    chats = Chat.objects.all()
-    chat_serialized_data = []
-    for chat in chats:
-        chat_serialized_data.append({
-            'chatname': chat.name,
-            'admin': chat.admin.username,
-            'members_count': chat.members_count,
-        })
-
-    # chat_serialized_data = serialize('python', chats)
-    context = {
-        'chat':chat_serialized_data,
-    }
-    return JsonResponse(context)
-
 
 class ChatsList(ListView):
+    """ Вывод списка всех чатов """
+
     model = Chat
     template_name = 'chats/chats_list.html'
-    paginate_by = 10
     context_object_name = 'chats'
-    #queryset = Chat.objects.all()
 
 
 class ChatCreate(CreateView):
+    """ Создание чата """
+
     form_class = ChatAddForm
     template_name = 'chats/add_chat.html'
 
 
-class ChatDetails(View):
-
-    def get(self, request, code, *args, **kwargs):
-        choosen_chat = Chat.objects.get(code = code)
-        messages = Message.objects.filter(chat = choosen_chat)
-        context = {'messages':messages, 'chat':choosen_chat}
-        return render(request, 'chats/chat_detail.html', context)
+class ChatData(View):
+    """ Метод get отвечает за отправку шаблона вместе с общими данными чата,
+        Метод post отвечает за отправленные на сервер сообщения."""
     
+    @staticmethod
+    def get(request, code, *args, **kwargs):
+        choosen_chat = Chat.objects.get(code = code)
+        context = {'chat':choosen_chat}
+        return render(request, 'chats/chat_detail.html', context)
 
-    def post(self, request, code, *args, **kwargs):
+    @staticmethod
+    def post(request, code, *args, **kwargs):
         form = AddMessageForm(request.POST)
         choosen_chat = Chat.objects.get(code = code)
         add_message = form.save(commit = False)
@@ -69,15 +57,25 @@ class ChatDetails(View):
                     add_message.sender = User.objects.get(id = 1)
                 add_message.chat = choosen_chat
                 form.save()
-                data['status'] = 'ok'
+                data['status'] = 'the message is received'
                 return JsonResponse(data)
-        messages = Message.objects.filter(chat = choosen_chat)
-        context = {'messages':messages, 'chat':choosen_chat}
-        return render(request, 'chats/chat_detail.html', context)
 
 
-class DynamicMessagesLoad(View):
+
+class ChatMessagesLoad(View):
+
+    """ Ну а тут он просто сообщения запрашивает """
+    def post(self, request, code, *args, **kwargs):
+        choosen_chat = Chat.objects.get(code = code)
+        messages = Message.objects.filter(chat = choosen_chat).values('id', 'sender__username', 'message', 'is_readed', 'created')
+        template = render_to_string('chat_components/messages.html', {'messages':messages})
+        return HttpResponse(template)
+
+
+class DynamicMessageLoad(View):
     
+    """ Сюда приходят ajax запросы с вопросом 'есть что новое?', если нет-
+    отправляю false """
     @staticmethod
     def get(request, code, *args, **kwargs):
         choosen_chat = Chat.objects.get(code = code)
@@ -103,11 +101,3 @@ class DynamicMessagesLoad(View):
             data.append(obj)
         data[-1]['last_message'] = True
         return JsonResponse({'data':data})
-
-
-
-class Profile(DetailView):
-    model = User
-    pk_url_kwarg = 'id'
-    context_object_name = 'user'
-    template_name = 'chats/profile.html'
